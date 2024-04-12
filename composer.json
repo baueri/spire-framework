@@ -5,7 +5,10 @@
     "autoload": {
         "psr-4": {
             "Baueri\\Spire\\Framework\\": "src/framework"
-        }
+        },
+        "files": [
+            "src/framework/functions.php"
+        ]
     },
     "scripts": {
         "migrate": "vendor/bin/phinx migrate",
@@ -39,5 +42,13 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "require-dev": {
+        "phpunit/phpunit": "^11.1"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Baueri\\Spire\\Framework\\Tests\\": "tests"
+        }
+    }
 }

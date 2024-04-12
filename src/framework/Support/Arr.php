@@ -1,30 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Baueri\Spire\Framework\Support;
 
 use Closure;
 
 class Arr
 {
-    public static function each(array|Collection $items, callable|Closure $callback, ...$params): void
+    public static function each(array $items, callable|Closure $callback, ...$params): void
     {
-        if ($items instanceof Collection) {
-            $items->each($callback);
-        } else {
-            foreach ($items as $key => $item) {
-                if ($callback($item, $key, ...$params) === false) {
-                    break;
-                }
+        foreach ($items as $key => $item) {
+            if ($callback($item, $key, ...$params) === false) {
+                break;
             }
         }
     }
 
-    public static function map(array|Collection $items, callable|string $callback, bool $keepKeys = false): array
+    public static function map(array $items, callable|string $callback, bool $keepKeys = false): array
     {
-        if ($items instanceof Collection) {
-            return $items->map($callback, $keepKeys)->all();
-        }
-
         $result = [];
 
         foreach ($items as $key => $item) {
@@ -45,10 +39,6 @@ class Arr
 
     public static function filter($items, $callback = null, bool $byKey = false): array
     {
-        if ($items instanceof Collection) {
-            return $items->filter($callback)->all();
-        }
-
         $result = [];
 
         foreach ($items as $key => $item) {
@@ -80,10 +70,6 @@ class Arr
             return array_key_exists($key, $items);
         }
 
-        if ($items instanceof Collection) {
-            return $items->has($key, static::getItemValue($value, $key));
-        }
-
         foreach ($items as $item) {
             if (static::getItemValue($item, $key) == static::getItemValue($value, $key)) {
                 return true;
@@ -95,19 +81,11 @@ class Arr
 
     public static function random($items)
     {
-        if ($items instanceof Collection) {
-            return $items->random();
-        }
-
         return $items[array_rand($items)];
     }
 
     public static function pluck($items, $key, $keyBy = null): array
     {
-        if ($items instanceof Collection) {
-            return $items->pluck($key, $keyBy)->all();
-        }
-
         $return = [];
         foreach ($items as $item) {
             if ($keyBy) {
