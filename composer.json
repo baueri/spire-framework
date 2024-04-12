@@ -1,0 +1,43 @@
+{
+    "name": "baueri/spire-framework",
+    "description": "A simple php framework for rapid development.",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Baueri\\Spire\\Framework\\": "src/framework"
+        }
+    },
+    "scripts": {
+        "migrate": "vendor/bin/phinx migrate",
+        "make:migration": "vendor/bin/phinx create",
+        "migrate:rollback": "vendor/bin/phinx rollback",
+        "db:seed": "vendor/bin/phinx seed:run",
+        "make:seed": "vendor/bin/phinx seed:create",
+        "test": "vendor/bin/phpunit tests",
+        "tinker": "php -d auto_prepend_file=\"vendor/autoload.php\" -a"
+    },
+    "authors": [
+        {
+            "name": "Ivan Bauer",
+            "email": "ivan.bauer90@gmail.com"
+        }
+    ],
+    "require": {
+        "phpmailer/phpmailer": "~6.1",
+        "psr/container": "^1.0",
+        "nesbot/carbon": "^2.50",
+        "jc21/clitable": "^1.3",
+        "cakephp/utility": "^5.0",
+        "symfony/var-dumper": "^7.0"
+    },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true
+        },
+        "platform": {
+            "php": "8.3"
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

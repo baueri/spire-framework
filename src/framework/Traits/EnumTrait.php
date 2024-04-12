@@ -1,0 +1,83 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Baueri\Spire\Framework\Traits;
+
+use Baueri\Spire\Framework\Support\Arr;
+use Baueri\Spire\Framework\Support\Collection;
+use UnitEnum;
+
+/**
+ * @mixin UnitEnum
+ */
+trait EnumTrait
+{
+    /**
+     * @return array<string, mixed>
+     */
+    public static function toArray(): array
+    {
+        $enums = [];
+
+        foreach (static::cases() as $case) {
+            $enums[$case->name] = static::getVal($case);
+        }
+
+        return $enums;
+    }
+
+    public static function keys(): array
+    {
+        return array_map(fn ($enum) => $enum->name, static::cases());
+    }
+
+    public static function values(): array
+    {
+        return array_map(fn ($enum) => static::getVal($enum), static::cases());
+    }
+
+    /**
+     * @return Collection<static>
+     */
+    public static function collect(): Collection
+    {
+        return collect(static::cases());
+    }
+
+    final public function value(): int|string
+    {
+        return static::getVal($this);
+    }
+
+    private static function getVal(UnitEnum $case): int|string
+    {
+        return enum_val($case);
+    }
+
+    public static function random(): static
+    {
+        return static::collect()->random();
+    }
+
+    /**
+     * @return Collection<static>
+     */
+    public static function fromList(null|string|array|Collection $items, ?string $separator = null): Collection
+    {
+        if (is_null($items)) {
+            return collect();
+        }
+
+        if (is_string($items)) {
+            $items = Arr::fromList($items, $separator);
+        }
+
+        return collect($items)->as(static::class);
+    }
+
+    public static function from($value)
+    {
+        return static::collect()->filter(fn ($enum) => $enum->value() === $value)->first();
+    }
+}
