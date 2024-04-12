@@ -249,4 +249,38 @@ class ArrTest extends TestCase
             'pipe separated' => ['foo|bar|baz', '|', ['foo', 'bar', 'baz']],
         ];
     }
+
+    #[DataProvider('exceptDataProvider')]
+    public function testExcept($list, $except, $expected): void
+    {
+        $result = Arr::except($list, $except);
+
+        $this->assertEquals($expected, $result);
+    }
+
+    public static function exceptDataProvider(): array
+    {
+        return [
+            'one key' => [
+                ['foo' => 'bar', 'baz' => 'qux'],
+                'foo',
+                ['baz' => 'qux'],
+            ],
+            'two keys' => [
+                ['foo' => 'bar', 'baz' => 'qux'],
+                ['foo', 'baz'],
+                [],
+            ],
+            'non-existing key' => [
+                ['foo' => 'bar'],
+                'baz',
+                ['foo' => 'bar'],
+            ],
+            'empty array' => [
+                [],
+                'foo',
+                [],
+            ]
+        ];
+    }
 }
