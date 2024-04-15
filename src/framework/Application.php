@@ -1,72 +1,56 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Baueri\Spire\Framework;
 
-use Baueri\Spire\Framework\Container\Container;
-use Baueri\Spire\Framework\Database\BootListeners;
-use Baueri\Spire\Framework\Database\QueryLog;
 use Baueri\Spire\Framework\Enums\Environment;
-use Baueri\Spire\Framework\Http\View\Bootstrappers\BootDirectives;
 use Baueri\Spire\Framework\Support\Config;
 use Baueri\Spire\Framework\Traits\DispatchesEvents;
-use Exception;
 use Throwable;
 
 class Application extends Container
 {
     use DispatchesEvents;
 
-    protected static Application $singleton;
-
     /**
-     * @var array<class-string<Bootstrapper>>
+     * @var Bootstrapper[]
      */
-    protected array $bootstrappers = [
-        BootDirectives::class,
-        BootListeners::class,
-    ];
+    protected array $bootstrap = [];
+
+    protected Config $config;
 
     private string $locale;
 
-    /**
-     * @throws Exception
-     */
-    public function __construct(public readonly string $root)
+    protected function __construct(public readonly string $root)
     {
         $this->locale = 'hu';
-        $this->singleton(static::class, function () {
-            return static::getInstance();
-        });
-
-        $this->singleton(QueryLog::class);
-        static::$singleton = $this;
     }
 
-    public static function getInstance(): Application
+    public static function create(string $root): static
     {
-        return static::$singleton;
+        $instance = new static($root);
+        self::setInstance($instance);
+        return $instance;
     }
 
     public function boot(): void
     {
         $this->runEvent('booting');
-        foreach ($this->bootstrappers as $bootstrapper) {
-            if (!is_callable($bootstrapper)) {
-                $this->make($bootstrapper)->boot();
-            } else {
-                $this->resolve($bootstrapper);
-            }
+        foreach ($this->bootstrap as $bootstrapper) {
+            $this->resolve($bootstrapper, 'boot');
         }
         $this->runEvent('booted');
     }
 
     public function config(string $key = null, $default = null): mixed
     {
+        $this->config ??= $this->get(Config::class);
         if (!$key) {
-            return $this->get(Config::class);
+            return $this->config;
         }
 
-        return $this->get(Config::class)->get($key, $default);
+        return $this->config->get($key, $default);
     }
 
     public function handleError(Throwable $e): void
@@ -82,11 +66,21 @@ class Application extends Container
     }
 
     /**
-     * @phpstan-param class-string<Bootstrapper> $bootstrapper
+     * @phpstan-param class-string<Bootstrapper>|Bootstrapper|callable|array $bootstrapper
      */
-    public function bootWith($bootstrapper): void
+    public function bootWith(array|string|callable|Bootstrapper $bootstrapper): void
     {
-        $this->bootstrappers[] = $bootstrapper;
+        if (is_array($bootstrapper)) {
+            array_walk($bootstrapper, fn ($boot) => $this->bootWith($boot));
+            return;
+        }
+
+        if (is_callable($bootstrapper)) {
+            $this->bootstrap[] = $bootstrapper;
+            return;
+        }
+
+        $this->bootstrap[] = $bootstrapper instanceof Bootstrapper ? $bootstrapper : $this->make($bootstrapper);
     }
 
     public function getLocale(): string
@@ -106,7 +100,7 @@ class Application extends Container
 
     public function getEnvironment(): string
     {
-        return config('app.environment');
+        return $this->config('app.environment');
     }
 
     public function isTest(): bool
@@ -116,7 +110,7 @@ class Application extends Container
 
     public function debug(): bool
     {
-        return config('app.debug') && !$this->envIs(Environment::production);
+        return $this->config('app.debug') && !$this->envIs(Environment::production);
     }
 
     public function root(string $path = ''): string

@@ -1,7 +1,8 @@
 <?php
 
-namespace Baueri\Spire\Framework\Container;
+namespace Baueri\Spire\Framework;
 
+use Baueri\Spire\Framework\Tests\StubEnumA;
 use Closure;
 use InvalidArgumentException;
 use Psr\Container\ContainerInterface;
@@ -19,6 +20,33 @@ class Container implements ContainerInterface
     protected array $singletons = [];
 
     protected array $shared = [];
+
+    protected static ?self $instance;
+
+    public static function getInstance(): static
+    {
+        if (isset(static::$instance)) {
+            return static::$instance;
+        }
+
+        static::$instance = new static();
+
+        static::$instance->singleton(static::class, function () {
+            return static::getInstance();
+        });
+
+        return static::$instance;
+    }
+
+    public static function setInstance(self $container): void
+    {
+        static::$instance = $container;
+    }
+
+    public static function reset(): void
+    {
+        static::$instance = null;
+    }
 
     public function singleton(array|string $abstraction, Closure|string|null $concrete = null): void
     {
@@ -78,17 +106,7 @@ class Container implements ContainerInterface
         if ($this->has($id) || $this->isSingletonRegistered($id)) {
             return $this->getShared($id);
         }
-
         return $this->make($id, func_get_args()[1] ?? []);
-    }
-
-    public function put($key, $value): void
-    {
-        if (!$this->has($key)) {
-            $this->share($key, [$value]);
-        }
-
-        $this->shared[$key][] = $value;
     }
 
     public function has($id): bool
@@ -127,21 +145,30 @@ class Container implements ContainerInterface
         return new $binding(...$args);
     }
 
-    protected function getBinding($binding)
+    public function getBinding($binding)
     {
         if ($this->isBindingRegistered($binding)) {
             return $this->bindings[$binding];
         }
 
-        if ($fallback = $this->getFallback($binding)) {
+        $fallback = $this->getFallback($binding);
+
+        if ($fallback) {
             return $fallback;
         }
 
         return $binding;
     }
 
+    /**
+     * @deprecated Ennek a fallback-nek nem nagyon van ertelme, nem kene egy parent class bindingjat visszaadni sztem.
+     */
     private function getFallback($class)
     {
+        if (!class_exists($class) && !is_object($class) && !interface_exists($class)) {
+            throw new InvalidArgumentException("Class `{$class}` does not exist");
+        }
+
         $parent = get_parent_class($class);
 
         if (!$parent) {
@@ -157,12 +184,17 @@ class Container implements ContainerInterface
 
     public function getDependencies($class, string $method = '__construct', ?array $resolvedDependencies = []): array
     {
-        if (!method_exists($class, $method) && !is_callable($class) && !$class instanceof Closure) {
+        if (!is_object($class) && !class_exists($class) && !is_callable($class) && !$class instanceof Closure) {
             return [];
         }
 
         $dependencies = [];
         $reflectionMethod = $this->getReflectionMethod($class, $method);
+
+        if (!$reflectionMethod) {
+            return [];
+        }
+
         $parameters = $reflectionMethod->getParameters();
 
         foreach ($parameters as $i => $parameter) {
@@ -170,7 +202,7 @@ class Container implements ContainerInterface
                 $dependencies[] = $resolvedDependencies[$i];
             } elseif (array_key_exists($parameter->name, $resolvedDependencies)) {
                 $dependencies[] = $resolvedDependencies[$parameter->name];
-            } elseif ($this->isResolvable($parameter)) {
+            } elseif ($this->isResolvable($parameter) || $parameter->isDefaultValueAvailable()) {
                 $dependencies[] = $this->getDependencyResourceValue($parameter);
             }
         }
@@ -178,17 +210,21 @@ class Container implements ContainerInterface
         return $dependencies;
     }
 
-    private function getReflectionMethod($abstract, string $method = '__construct'): ?ReflectionFunctionAbstract
+    private function getReflectionMethod($abstract, string $method): ?ReflectionFunctionAbstract
     {
         if ($abstract instanceof Closure || (is_string($abstract) && is_callable($abstract))) {
             return new ReflectionFunction($abstract);
         }
 
-        if (!method_exists($abstract, $method)) {
+        if (method_exists($abstract, $method)) {
+            return new ReflectionMethod($abstract, $method);
+        }
+
+        if ($method === '__construct') {
             return null;
         }
 
-        return new ReflectionMethod($abstract, $method);
+        throw new InvalidArgumentException("Method {$abstract}::{$method} does not exist");
     }
 
     private function getDependencyResourceValue(ReflectionParameter $resource)
@@ -196,7 +232,6 @@ class Container implements ContainerInterface
         $value = null;
         if ($resource->hasType()) {
             $resourceType = $resource->getType()->getName();
-
             if ($resource->isDefaultValueAvailable()) {
                 $value = $resource->getDefaultValue();
             } elseif (is_subclass_of($resourceType, UnitEnum::class) && $requestValue = request()->get($resource->name) ?? request()->getUriValue($resource->name)) {
@@ -223,11 +258,6 @@ class Container implements ContainerInterface
     public function share(string $key, $value): void
     {
         $this->shared[$key] = $value;
-    }
-
-    public function getBindings(): array
-    {
-        return $this->bindings;
     }
 
     public function resolve($concrete, ?string $method = null)

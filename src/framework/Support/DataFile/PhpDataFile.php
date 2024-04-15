@@ -6,15 +6,15 @@ namespace Baueri\Spire\Framework\Support\DataFile;
 
 class PhpDataFile extends DataFile
 {
-    protected static ?string $extension = 'php';
+    protected static ?string $extension = '.php';
 
     protected function parse($content)
     {
         return $content;
     }
 
-    protected static function getContent(string $filename)
+    protected static function getContent(string $filename): array
     {
-        return include $filename;
+        return require $filename;
     }
 }

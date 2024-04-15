@@ -63,14 +63,14 @@ readonly class Path
         return new File($this->path . $path);
     }
 
-    public function get(string $path): string|false
+    public function getContents(string $path): string|false
     {
         return file_get_contents($this->path . $path);
     }
 
     public function parseList(string $path, string $delimiter = ','): Collection
     {
-        return Collection::fromList($this->get($path), $delimiter);
+        return Collection::fromList($this->getContents($path), $delimiter);
     }
 
     public function basename(): string

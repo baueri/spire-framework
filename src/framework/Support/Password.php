@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Baueri\Spire\Framework\Support;
 
 use Baueri\Spire\Framework\PasswordGenerator;

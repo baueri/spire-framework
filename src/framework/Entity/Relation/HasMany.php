@@ -9,7 +9,7 @@ use Baueri\Spire\Framework\Entity\Entity;
 use Baueri\Spire\Framework\Entity\EntityQueryBuilder;
 use Baueri\Spire\Framework\Support\Arr;
 use Baueri\Spire\Framework\Support\Collection;
-use Baueri\Spire\Framework\Support\StringHelper;
+use Baueri\Spire\Framework\Support\Str;
 
 trait HasMany
 {
@@ -75,7 +75,7 @@ trait HasMany
             relationType: $relationType,
             queryBuilder: is_string($repositoryClass) ? app()->get($repositoryClass) : $repositoryClass,
             relationName: $this->getRelationName(),
-            foreignKey: $foreignKey ?: StringHelper::snake(get_class_name($this->getEntityClass())) . '_id',
+            foreignKey: $foreignKey ?: Str::snake(get_class_name($this->getEntityClass())) . '_id',
             localKey: $localKey
         );
     }

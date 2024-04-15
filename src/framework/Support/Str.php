@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Baueri\Spire\Framework\Support;
 
-final class StringHelper
+use Cake\Utility\Inflector;
+
+final class Str
 {
     /**
      *
@@ -27,8 +29,9 @@ final class StringHelper
 
     public static function shorten(?string $text, int $numberOfCharacters, string $moreText = ''): string
     {
-        if (mb_strlen((string) $text) <= $numberOfCharacters) {
-            return (string) $text;
+        $text = trim((string) $text);
+        if (mb_strlen($text) <= $numberOfCharacters) {
+            return $text;
         }
 
         return mb_substr($text, 0, $numberOfCharacters) . $moreText;
@@ -39,9 +42,15 @@ final class StringHelper
         return lcfirst(str_replace(' ', '', ucwords(preg_replace('/[^a-zA-Z0-9\x7f-\xff]++/', ' ', $text))));
     }
 
-    public static function snake($text, string $delimiter = '_'): string
+    public static function snake($text): string
     {
-        return strtolower(preg_replace(['/([A-Z]+)([A-Z][a-z])/', '/([a-z\d])([A-Z])/'], '\1' . $delimiter . '\2', ucfirst($text)));
+        if (!$text) {
+            return '';
+        }
+
+        $text = preg_replace('~[^\pL\d]+~u', '_', $text);
+
+        return strtolower(preg_replace(['/([A-Z0-9]+)([A-Z][a-z])/', '/([a-z\d])([A-Z])/'], '\1_\2', ucfirst($text)));
     }
 
     public static function slugify($text, $divider = '-'): string
@@ -76,11 +85,11 @@ final class StringHelper
         $search = [
             '/>[^\S ]+/',     // strip whitespaces after tags, except space
             '/[^\S ]+</',     // strip whitespaces before tags, except space
-            '/(\s)+/',         // shorten multiple whitespace sequences
-            '/<!--(.|\s)*?-->/' // Remove HTML comments
+            '/<!--(.|\s)*?-->/', // Remove HTML comments
+            '/(\s){2,}/',         // shorten multiple whitespace sequences
         ];
 
-        $replace = ['>', '<', '\\1', ''];
+        $replace = ['>', '<', '', '\\1'];
 
         return preg_replace($search, $replace, $buffer);
     }
@@ -96,15 +105,6 @@ final class StringHelper
         return "{$before}{$string}{$after}";
     }
 
-    public static function plural($word): string
-    {
-        if (self::endsWith($word, 'y')) {
-            return substr($word, 0, strlen($word) - 1) . 'ies';
-        }
-
-        return "{$word}s";
-    }
-
     public static function endsWith($string, $endsWith): bool
     {
         return strrpos($string, $endsWith) === strlen($string) - strlen($endsWith);
@@ -115,15 +115,23 @@ final class StringHelper
         return str_starts_with($string, $startsWith);
     }
 
-    public static function mask(string $text, int $keep = 3): string
+    public static function mask(string $text, int $keep = 3, string $mask = '*'): string
     {
-        return substr($text, 0, $keep) . str_repeat('*', mb_strlen($text) - $keep);
+        if (!$text) {
+            return '';
+        }
+        $keep = min($keep, mb_strlen($text));
+        return substr($text, 0, $keep) . str_repeat($mask, mb_strlen($text) - $keep);
     }
 
-    public static function maskEmail(string $email, int $keep = 3): string
+    public static function maskEmail(string $email, int|null $keep = null): string
     {
         if (!($at_pos = strpos($email, '@'))) {
             return '';
+        }
+
+        if ($keep === null) {
+            $keep = 0;
         }
 
         return self::mask(substr($email, 0, $at_pos), $keep) . substr($email, $at_pos);

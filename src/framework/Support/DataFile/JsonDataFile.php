@@ -6,7 +6,7 @@ namespace Baueri\Spire\Framework\Support\DataFile;
 
 class JsonDataFile extends DataFile
 {
-    protected static ?string $extension = 'json';
+    protected static ?string $extension = '.json';
 
     protected function parse($content): array
     {

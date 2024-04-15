@@ -8,6 +8,7 @@ use Baueri\Spire\Framework\Http\Exception\RouteNotFoundException;
 use Baueri\Spire\Framework\Http\RequestMethod;
 use Baueri\Spire\Framework\Entity\Entity;
 use Baueri\Spire\Framework\Support\Collection;
+use Baueri\Spire\Framework\Support\FileCache;
 use Baueri\Spire\Framework\Support\XmlObject;
 use Exception;
 
@@ -24,7 +25,7 @@ class XmlRouter implements RouterInterface
      * @throws Exception
      */
     public function __construct(
-        protected readonly array $routeSources
+        protected readonly array $routeSources = []
     ) {
         $this->load();
     }
@@ -38,11 +39,11 @@ class XmlRouter implements RouterInterface
 
         $sources = $this->routeSources;
 
-        $maxMtime = max(...array_map(fn ($file) => filemtime($file), $sources));
+        $maxMtime = $sources ? max(...array_map(fn ($file) => filemtime($file), $sources)) : 0;
 
-        $cachedFile = CACHE . "route.php";
+        $cachedFile = app()->get(FileCache::class)->path . "route.php";
 
-        if (env('ROUTE_CACHE_ENABLED') && file_exists($cachedFile) && filemtime($cachedFile) >= $maxMtime) {
+        if (config('app.route_cache_enabled', false) && file_exists($cachedFile) && filemtime($cachedFile) >= $maxMtime) {
             $cachedRoutes = require_once $cachedFile;
             foreach ($cachedRoutes as $route) {
                 $this->addRoute(new Route($route['method'],

@@ -21,7 +21,7 @@ use Baueri\Spire\Framework\Http\View\ViewInterface;
 use Baueri\Spire\Framework\Entity\Entity;
 use Baueri\Spire\Framework\Entity\EntityQueryBuilder;
 use Baueri\Spire\Framework\Support\Collection;
-use Baueri\Spire\Framework\Support\StringHelper;
+use Baueri\Spire\Framework\Support\Str;
 use Baueri\Spire\Framework\Translation\Translator;
 
 function app(): Application
@@ -381,11 +381,11 @@ function diff(array|Collection $old, array|Collection $new): array
 
 function str_more(string $text, int $numberOfWords, string $moreText = ''): string
 {
-    return StringHelper::more($text, $numberOfWords, $moreText);
+    return Str::more($text, $numberOfWords, $moreText);
 }
 function str_shorten(string $text, int $numberOfCharacters, string $moreText = ''): string
 {
-    return StringHelper::shorten($text, $numberOfCharacters, $moreText);
+    return Str::shorten($text, $numberOfCharacters, $moreText);
 }
 
 function castInto($from, $to)

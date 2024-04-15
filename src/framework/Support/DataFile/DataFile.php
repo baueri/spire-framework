@@ -1,29 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Baueri\Spire\Framework\Support\DataFile;
 
 abstract class DataFile
 {
-    const ROOT = ROOT;
-
-    protected static ?string $basePath = null;
-
     protected static ?string $extension = null;
 
     protected array $items;
 
-    public function __construct(?string $fileName = null)
+    public function __construct(protected readonly ?string $basePath = null)
     {
-        if ($fileName) {
-            $this->load($fileName);
-        }
+//        if ($basePath) {
+//            $this->load($basePath);
+//        }
     }
 
     public function get($key, $default = null)
     {
         [$baseName, $index] = static::parseKey($key);
 
-        $fileName = static::getFileName($baseName);
+        $fileName = $this->getFileName($baseName);
 
         $this->load($baseName);
 
@@ -39,7 +37,7 @@ abstract class DataFile
         return $parsed;
     }
 
-    protected static function getFileName(string $baseName): string
+    protected function getFileName(string $baseName): string
     {
         $scope = '';
 
@@ -48,12 +46,7 @@ abstract class DataFile
             $baseName = substr($baseName, strpos($baseName, '::') + 2);
         }
 
-        return static::getDir($scope) . $baseName . (static::$extension ? '.' . static::$extension : '');
-    }
-
-    protected static function getDir(string $scope): string
-    {
-        return self::ROOT . $scope . static::$basePath;
+        return root()->path($scope . $this->basePath . $baseName) . static::$extension;
     }
 
     abstract protected function parse($content);
@@ -84,7 +77,7 @@ abstract class DataFile
 
     public function load($baseName): self
     {
-        $fileName = static::getFileName($baseName);
+        $fileName = $this->getFileName($baseName);
         if (!isset($this->items[$fileName])) {
             $this->items[$fileName] = static::parse(static::getContent($fileName));
         }

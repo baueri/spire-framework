@@ -7,7 +7,7 @@ namespace Baueri\Spire\Framework\Support;
 readonly class FileCache
 {
     public function __construct(
-        public string $path
+        public string $path = __DIR__ . '/../../.cache'
     ) {
     }
 

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Baueri\Spire\Framework\Console;
 
 use Baueri\Spire\Framework\Application;
-use Baueri\Spire\Framework\Support\StringHelper;
+use Baueri\Spire\Framework\Support\Str;
 
 abstract class Command
 {
@@ -66,11 +66,11 @@ abstract class Command
         }
 
         foreach ($this->args as $arg) {
-            if (StringHelper::startsWith($arg, "--{$key}=")) {
+            if (Str::startsWith($arg, "--{$key}=")) {
                 return mb_substr($arg, mb_strlen("--{$key}="));
             }
 
-            if (StringHelper::startsWith($arg, "--{$key}")) {
+            if (Str::startsWith($arg, "--{$key}")) {
                 return true;
             }
         }

@@ -36,7 +36,6 @@ class Request implements ArrayAccess, Countable, IteratorAggregate
 
     public function __construct()
     {
-
         $this->request = (new Collection(array_merge($_GET, $_POST)))->each(function ($item, $key, $collection) {
             if ($item == "true" || $item == "false") {
                 $collection[$key] = filter_var($item, FILTER_VALIDATE_BOOLEAN);
