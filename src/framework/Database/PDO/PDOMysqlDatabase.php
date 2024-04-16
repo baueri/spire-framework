@@ -32,7 +32,6 @@ class PDOMysqlDatabase implements Database
 
         $time = microtime(true) - $start;
 
-
         EventDispatcher::dispatch(new QueryRan($query, $bindings, $time));
 
         return new PDOResultSet($statement);
