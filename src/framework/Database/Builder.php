@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection SqlNoDataSourceInspection */
 
 declare(strict_types=1);
 
@@ -36,7 +36,7 @@ class Builder
 
     public const PRIMARY = 'id';
 
-    public const TABLE = '';
+    public const string TABLE = '';
 
     public function __construct(
         public readonly Database $db
@@ -198,7 +198,7 @@ class Builder
 
                 $closureWhere = $builder->buildWhere();
 
-                $where .= "($closureWhere) $operator";
+                $where .= trim("($closureWhere) $operator");
 
                 $bindings = array_merge($bindings, $closureBindings);
             } elseif ($operator) {
@@ -234,7 +234,9 @@ class Builder
 
     public function fetchFirst(?string $column = null)
     {
-        return $this->first()[$column ?? $this->select[0]] ?? null;
+        $row = $this->first();
+        $column = $column ?? $this->select[0] ?? key($row);
+        return $row[$column] ?? null;
     }
 
     public function limit(int|string $limit): self
@@ -246,7 +248,7 @@ class Builder
 
     public function paginate(?int $limit = null, ?int $page = null): PaginatedResultSetInterface
     {
-        [$rows, $total, $limit, $page] = $this->paginateRaw($limit, $page);
+        [$rows, $total, $limit, $page] = array_values($this->paginateRaw($limit, $page));
 
         return new PaginatedResultSet($rows, $limit, $page, $total);
     }
@@ -282,7 +284,7 @@ class Builder
 
     public function groupBy($groupBy): self
     {
-        $this->groupBy[] = $groupBy;
+        $this->groupBy = Arr::wrap($groupBy);
         return $this;
     }
 
@@ -315,7 +317,7 @@ class Builder
 
     public function addSelect($select, $bindings = []): self
     {
-        $this->select = array_merge($this->select, Arr::wrap($select));
+        $this->select = array_unique(array_merge($this->select, Arr::wrap($select)));
         $this->selectBindings = array_merge($this->selectBindings, $bindings);
 
         return $this;
@@ -365,7 +367,7 @@ class Builder
         return $this->where($column, 'not in', $values, $clause);
     }
 
-    public function whereIn($column, $values, $clause = 'and'): self
+    public function whereIn($column, $values, ?string $clause = 'and'): self
     {
         $collected = collect($values);
         if ($collected->isEmpty()) {
@@ -375,7 +377,7 @@ class Builder
         return $this->where($column, 'in', $collected->all(), $clause);
     }
 
-    public function wherePast($column, $clause = 'and'): self
+    public function wherePast($column, ?string $clause = 'and'): self
     {
         return $this->where($column, '<', now(), $clause);
     }

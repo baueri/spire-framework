@@ -14,7 +14,7 @@ use Baueri\Spire\Framework\Event\EventDispatcher;
 use PDO;
 use UnitEnum;
 
-class PDOMysqlDatabase implements Database
+class PDODatabase implements Database
 {
     private int $transactionCounter = 0;
 
@@ -125,7 +125,7 @@ class PDOMysqlDatabase implements Database
         return $this->execute($query, ...$params)->rowCount();
     }
 
-    private function prepareBindings(array $bindings): array
+    public function prepareBindings(array $bindings): array
     {
         return array_map(function($binding) {
             if ($binding instanceof UnitEnum) {

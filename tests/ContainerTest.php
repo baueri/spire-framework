@@ -283,7 +283,7 @@ class ContainerTest extends TestCase
         $container->singleton(RouterInterface::class, XmlRouter::class);
         $container->singleton(Request::class);
         $container->bind(Config::class, function () {
-            return new Config('tests/Support/Stubs/');
+            return new Config('tests/Support/Fixtures/');
         });
 
         request()->set('stubEnum', 'one');

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Baueri\Spire\Framework\Database\PDO;
 
 use Baueri\Spire\Framework\Database\ResultSet;
@@ -8,7 +10,7 @@ use PDOStatement;
 
 class PDOResultSet implements ResultSet
 {
-    public const FETCH_STYLE = PDO::FETCH_ASSOC;
+    public const int FETCH_STYLE = PDO::FETCH_ASSOC;
 
     private PDOStatement $statement;
 
